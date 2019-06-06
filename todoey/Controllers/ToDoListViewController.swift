@@ -34,6 +34,9 @@ class ToDoListViewController: UITableViewController {
         newItem3.title = "Destroy Demogorgon"
         itemArray.append(newItem3)
         
+        if let items = defaults.array(forKey: "ToDoListArray") as? [Item] {
+            itemArray = items
+        }
     }
     
     // MARK - TableView delegate Methods
@@ -52,11 +55,13 @@ class ToDoListViewController: UITableViewController {
         
         cell.textLabel?.text = item.title
         
-        if item.done == true {
-            cell.accessoryType = .checkmark
-        } else {
-            cell.accessoryType = .none
-        }
+//        if item.done == true {
+//            cell.accessoryType = .checkmark
+//        } else {
+//            cell.accessoryType = .none
+//        }
+//        cell.accessoryType = item.done == true ? .checkmark : .none
+        cell.accessoryType = item.done ? .checkmark : .none        
         
         return cell
     }
