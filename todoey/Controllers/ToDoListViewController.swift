@@ -13,7 +13,13 @@ class ToDoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    var selectedCategory : Category? {
+        didSet{
+            loadItems()
+        }
+    }
+    
+//    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
 
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
@@ -22,7 +28,7 @@ class ToDoListViewController: UITableViewController {
         
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
-        loadItems()
+//        loadItems()
         
     }
     
@@ -77,6 +83,7 @@ class ToDoListViewController: UITableViewController {
             let newItem = Item(context: self.context)
             newItem.title = textField.text!
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             
             self.saveItems()
@@ -104,9 +111,21 @@ class ToDoListViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
 //        let request : NSFetchRequest<Item> = Item.fetchRequest()
-    
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
+//        let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, predicate])
+//
+//        request.predicate = compoundPredicate
+        
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -126,11 +145,13 @@ extension ToDoListViewController: UISearchBarDelegate {
         
         let request : NSFetchRequest<Item> = Item.fetchRequest()
         
+        let predicate = NSPredicate(format: "")
+        
         request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
         
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
-        loadItems(with: request)
+        loadItems(with: request, predicate: predicate)
         
 //        do {
 //            itemArray = try context.fetch(request)
@@ -152,84 +173,3 @@ extension ToDoListViewController: UISearchBarDelegate {
         }
     }
 }
-
-//
-//import UIKit
-//import CoreData
-//
-//class CategoryTableViewController: UITableViewController {
-//
-//    var categories = [Category]()
-//
-//    let context = (UIApplication.shared.delegate as!AppDelegate).persistentContainer.viewContext
-//
-//    override func viewDidLoad() {
-//        super.viewDidLoad()
-//
-//        loadCategories()
-//    }
-//
-//    //MARK: - TableView Datasource Methods
-//    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-//        return categories.count
-//    }
-//
-//    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-//
-//        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-//
-//        cell.textLabel?.text = categories[indexPath.row].name
-//
-//        return cell
-//    }
-//
-//
-//    //MARK: - Data Manipulation Methods
-//
-//    func saveCategories() {
-//        do {
-//            try context.save()
-//        } catch {
-//            print("Error saving category \(error)")
-//        }
-//
-//        tableView.reloadData()
-//
-//    }
-//
-//    func loadCategories() {
-//
-//        let request : NSFetchRequest<Category> = Category.fetchRequest()
-//
-//        do {
-//            categories = try context.fetch(request)
-//        } catch {
-//            print("Error loading categories. \(error)")
-//        }
-//
-//        tableView.reloadData()
-//    }
-//
-//    //MARK: - Add New Categories
-//
-//    @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
-//
-//        var textField = UITextField()
-//
-//        let alert = UIAlertController(title: "Add New Category", message:"", preferredStyle: .alert)
-//
-//        let action = UIAlertAction(title: "Add", style: .default) { (action) in
-//
-//            let newCategory = Category(context: self.context)
-//            newCategory.name = textField.text!
-//
-//            self.categories.append(newCategory)
-//
-//            self.saveCategories()
-//        }
-//
-//    }
-//
-//    //MARK: - TableView Delegate Methods
-//
-//}
